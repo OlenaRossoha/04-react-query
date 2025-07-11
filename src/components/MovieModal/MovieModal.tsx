@@ -8,8 +8,6 @@ interface MovieModalProps {
   onClose: () => void;
 }
 
-const modalRoot = document.getElementById("modal-root")!;
-
 const MovieModal: React.FC<MovieModalProps> = ({ movie, onClose }) => {
   useEffect(() => {
     // Заборона скролінгу
@@ -35,6 +33,7 @@ const MovieModal: React.FC<MovieModalProps> = ({ movie, onClose }) => {
     }
   };
 
+  // 👉 Рендеримо портал у document.body, не в modal-root
   return ReactDOM.createPortal(
     <div
       className={styles.backdrop}
@@ -71,7 +70,7 @@ const MovieModal: React.FC<MovieModalProps> = ({ movie, onClose }) => {
         </div>
       </div>
     </div>,
-    modalRoot
+    document.body
   );
 };
 

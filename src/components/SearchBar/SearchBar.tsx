@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client"; // Якщо ви використовуєте Next.js з App Router
+
+import React from "react";
 import styles from "./SearchBar.module.css";
 import { toast } from "react-hot-toast";
 
@@ -7,19 +9,16 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
-  const [inputValue, setInputValue] = useState("");
+  async function action(formData: FormData) {
+    const query = (formData.get("query") as string)?.trim();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const query = inputValue.trim();
     if (!query) {
       toast.error("Please enter your search query.");
       return;
     }
 
     onSubmit(query);
-  };
+  }
 
   return (
     <header className={styles.header}>
@@ -32,7 +31,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
         >
           Powered by TMDB
         </a>
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} action={action}>
           <input
             className={styles.input}
             type="text"
@@ -40,8 +39,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
             autoComplete="off"
             placeholder="Search movies..."
             autoFocus
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
           />
           <button className={styles.button} type="submit">
             Search

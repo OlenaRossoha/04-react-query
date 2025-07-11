@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchMovies } from "../../services/movieService";
-import type { MoviesResponse, Movie } from "../../types/movie";
+import type { MoviesResponse, Movie } from "../../services/movieService";
 import { useQuery } from "@tanstack/react-query";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
