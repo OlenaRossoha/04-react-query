@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { fetchMovies } from "../../services/movieService";
-import type { MoviesResponse, Movie } from "../../services/movieService";
-import { useQuery } from "@tanstack/react-query";
+import type { MoviesResponse } from "../../services/movieService";
+import type { Movie } from "../../types/movie";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
@@ -12,25 +13,27 @@ import { Toaster, toast } from "react-hot-toast";
 import styles from "./App.module.css";
 
 export default function App() {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<Movie | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isSuccess, isFetching } = useQuery<
+    MoviesResponse,
+    Error,
+    MoviesResponse,
+    [string, string, number]
+  >({
     queryKey: ["movies", query, page],
-    queryFn: (): Promise<MoviesResponse> => fetchMovies(query, page),
-    enabled: !!query,
+    queryFn: () => fetchMovies(query, page),
+    enabled: query.trim().length > 0,
+    placeholderData: keepPreviousData, // 🔧 вот исправление!
   });
 
-  // Показываем ошибку через эффект
   useEffect(() => {
-    if (isError) {
+    if (isSuccess && data?.results.length === 0) {
       toast.error("No movies found for your request.");
     }
-  }, [isError]);
-
-  // Приведение типа data к MoviesResponse | undefined для TS
-  const typedData = data as MoviesResponse | undefined;
+  }, [isSuccess, data]);
 
   const handleSubmit = (q: string) => {
     setQuery(q);
@@ -44,13 +47,14 @@ export default function App() {
   return (
     <>
       <SearchBar onSubmit={handleSubmit} />
-      {isLoading && <Loader />}
+      {(isLoading || isFetching) && <Loader />}
       {isError && <ErrorMessage />}
-      {typedData?.results?.length ? (
+
+      {data && data.results.length > 0 ? (
         <>
-          {typedData.total_pages > 1 && (
+          {data.total_pages > 1 && (
             <ReactPaginate
-              pageCount={typedData.total_pages}
+              pageCount={data.total_pages}
               pageRangeDisplayed={5}
               marginPagesDisplayed={1}
               onPageChange={handlePage}
@@ -61,12 +65,14 @@ export default function App() {
               previousLabel="←"
             />
           )}
-          <MovieGrid movies={typedData.results} onSelect={setSelected} />
+          <MovieGrid movies={data.results} onSelect={setSelected} />
         </>
       ) : null}
+
       {selected && (
         <MovieModal movie={selected} onClose={() => setSelected(null)} />
       )}
+
       <Toaster position="top-right" />
     </>
   );
